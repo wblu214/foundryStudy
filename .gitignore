@@ -2,7 +2,6 @@
 cache/
 out/
 .vscode/
-broadcast/
 
 # Ignores development broadcast logs
 !/broadcast
