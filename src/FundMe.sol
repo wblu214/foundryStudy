@@ -8,12 +8,12 @@ import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interf
 contract FundMe {
     using PriceConverter for uint256;
 
-    uint256 public constant MINI_USD = 1e17;
+    uint256 public constant MINI_USD = 1e18;
 
-    address[] public funders;
+    address[] private s_funders;
 
     mapping(address funder => uint256 amountFunded)
-        public addressToAmountFunded;
+        private s_addressToAmountFunded;
 
     address public immutable I_OWBNER;
 
@@ -30,23 +30,23 @@ contract FundMe {
             msg.value.getConversionRate(s_priceFeed) >= MINI_USD,
             "didn't send enough ETH"
         );
-        funders.push(msg.sender);
-        addressToAmountFunded[msg.sender] += msg.value;
+        s_funders.push(msg.sender);
+        s_addressToAmountFunded[msg.sender] += msg.value;
     }
 
     function withdraw() public onlyOwner {
         // gas 37184
-        // reset funders address and balance
+        // reset s_funders address and balance
         for (
-            uint256 fundersIndex = 0;
-            fundersIndex < funders.length;
-            fundersIndex++
+            uint256 s_fundersIndex = 0;
+            s_fundersIndex < s_funders.length;
+            s_fundersIndex++
         ) {
-            address funder = funders[fundersIndex];
-            addressToAmountFunded[funder] = 0;
+            address funder = s_funders[s_fundersIndex];
+            s_addressToAmountFunded[funder] = 0;
         }
 
-        funders = new address[](0);
+        s_funders = new address[](0);
         (bool callSuccessful, ) = payable(msg.sender).call{
             value: address(this).balance
         }("");
@@ -64,5 +64,32 @@ contract FundMe {
 
     function _onlyOWner() internal view {
         require(msg.sender == I_OWBNER, "Must be Owner !!");
+    }
+
+    /**
+     * Getter Functions
+     */
+
+    /**
+     * @notice Gets the amount that an address has funded
+     *  @param fundingAddress the address of the funder
+     *  @return the amount funded
+     */
+    function getAddressToAmountFunded(
+        address fundingAddress
+    ) public view returns (uint256) {
+        return s_addressToAmountFunded[fundingAddress];
+    }
+
+    function getFunder(uint256 index) public view returns (address) {
+        return s_funders[index];
+    }
+
+    function getOwner() public view returns (address) {
+        return I_OWBNER;
+    }
+
+    function getPriceFeed() public view returns (AggregatorV3Interface) {
+        return s_priceFeed;
     }
 }
