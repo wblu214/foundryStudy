@@ -3,12 +3,15 @@ pragma solidity ^0.8.20;
 
 import {Test, console} from "forge-std/Test.sol";
 import {FundMe} from "../src/FundMe.sol";
+import {DeployFundMe} from "../script/deployFundMe.s.sol";
+import {HelperConfig} from "../script/HelperConfig.s.sol";
 
 contract FundMeTest is Test {
     FundMe fundMe;
 
     function setUp() external {
-        fundMe = new FundMe();
+        DeployFundMe deployer = new DeployFundMe();
+        fundMe = deployer.run();
     }
 
     function testDemo1() public view {
@@ -18,6 +21,10 @@ contract FundMeTest is Test {
     function testDemo2() public view {
         console.log(fundMe.I_OWBNER());
         console.log(msg.sender);
-        assertEq(fundMe.I_OWBNER(), address(this));
+        assertEq(fundMe.I_OWBNER(), msg.sender);
+    }
+
+    function testDemo3() public view {
+        assertEq(fundMe.getVersion(), 4);
     }
 }

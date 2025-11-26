@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import {PriceConverter} from "./PriceConverter.sol";
+import {AggregatorV3Interface} from "@chainlink/contracts/src/v0.8/shared/interfaces/AggregatorV3Interface.sol";
 
 //constant 常量,immutable 可变量
 contract FundMe {
@@ -10,19 +11,23 @@ contract FundMe {
     uint256 public constant MINI_USD = 1e17;
 
     address[] public funders;
+
     mapping(address funder => uint256 amountFunded)
         public addressToAmountFunded;
 
     address public immutable I_OWBNER;
 
-    constructor() {
+    AggregatorV3Interface private s_priceFeed;
+
+    constructor(address priceFeedAddress) {
         I_OWBNER = msg.sender;
+        s_priceFeed = AggregatorV3Interface(priceFeedAddress);
     }
 
     function fund() public payable {
         //gas 110661
         require(
-            msg.value.getConversionRate() >= MINI_USD,
+            msg.value.getConversionRate(s_priceFeed) >= MINI_USD,
             "didn't send enough ETH"
         );
         funders.push(msg.sender);
@@ -46,6 +51,10 @@ contract FundMe {
             value: address(this).balance
         }("");
         require(callSuccessful, "Call Failed !!!");
+    }
+
+    function getVersion() public view returns (uint256) {
+        return s_priceFeed.version();
     }
 
     modifier onlyOwner() {
