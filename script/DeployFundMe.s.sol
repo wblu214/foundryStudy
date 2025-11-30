@@ -17,6 +17,4 @@ contract DeployFundMe is Script {
         vm.stopBroadcast();
         return fundMe;
     }
-
-    //后序步骤
 }
